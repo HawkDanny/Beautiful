@@ -1,0 +1,93 @@
+
+//Digital pin has a switch attached to it
+const int switchInputPin = 2;
+const int buttonInputPin = 4;
+const int photoSensorPin = A0;
+const int redPin = 9;
+const int greenPin = 10;
+const int bluePin = 11;
+
+int redVal;
+int greenVal;
+int blueVal;
+
+int photoSensorVal;
+
+//Sensor floor is the number that the LEDs cut off on when the sensor reaches it
+int sensorFloor;
+int sensorCeiling;
+
+//The state of the switch that determines color
+bool switchState;
+
+void setup() {
+  //Let the board know about the digital input for the switch and button
+  pinMode(switchInputPin, INPUT);
+  pinMode(buttonInputPin, INPUT);
+
+  redVal = 0;
+  greenVal = 0;
+  blueVal = 0;
+}
+
+void loop() {
+  //Retrieve all the input
+  photoSensorVal = max(sensorFloor, analogRead(photoSensorPin));
+  switchState = digitalRead(switchInputPin);
+
+  if (digitalRead(buttonInputPin)){
+    zeroSensor();
+  }
+  
+  //Send that data to the LED
+  analogWrite(redPin, redVal);
+  analogWrite(greenPin, greenVal);
+  analogWrite(bluePin, blueVal);
+
+  calcColors();
+
+  chillColors();
+
+  delay(10);
+}
+
+//Set the values of the colors
+void calcColors() {
+
+  redVal = 0;
+  greenVal = 0;
+  blueVal = 0;
+
+  int lightVal = map(photoSensorVal, sensorCeiling, sensorFloor, 0, 255);
+
+  if (switchState) {
+    if (lightVal < 20) {
+      greenVal = 0;
+    } else {
+      greenVal = lightVal;
+    }
+    blueVal = greenVal / 2;
+  } else {
+    if (lightVal < 20) {
+      redVal = 0;
+    } else {
+      redVal = lightVal;
+    }
+    greenVal = redVal / 2;
+  }
+  
+}
+
+//Reset the colors so they never eclipse 255
+void chillColors() {
+
+  redVal = min(redVal, 255);
+  greenVal = min(greenVal, 255);
+  blueVal = min(blueVal, 255);
+}
+
+//Zero the light if the button is pressed
+void zeroSensor() {
+    sensorFloor = max(photoSensorVal - 200, 0); //The darkest it needs to get in order to be the brightest LEDS
+    sensorCeiling = photoSensorVal; //The lightest it will be (LEDs are off)
+}
