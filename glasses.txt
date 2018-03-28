@@ -1,0 +1,33 @@
+#include <Servo.h>
+
+Servo motor1; //left
+Servo motor2; //right
+
+float IRSensor = A0;
+
+//Will be replaced with infrared sensor
+int switchIn = 2;
+
+void setup() {
+  pinMode(switchIn, INPUT);
+  
+  motor1.attach(9); //Attach to pin 9
+  motor2.attach(10); //Attach to pin 10
+}
+
+void loop() {
+
+  int switchVal = digitalRead(switchIn);
+  int IRVal = analogRead(A0);
+  
+  //Change the motor based on a switch
+  if (IRVal < 340) {
+    motor1.write(150);
+    motor2.write(60);
+  } else {
+    motor1.write(60);
+    motor2.write(150);
+  }
+
+  delay(1000);
+}
