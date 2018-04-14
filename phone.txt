@@ -1,0 +1,67 @@
+#include "pitches.h"
+
+int micIn = A0; //microphone analog input
+int speakerOut = 8;
+int buttonIn = 2;
+int switchIn = 4;
+
+bool hungUp = true; //just a starting value
+bool calling = false;
+int phoneNumberNums = 0;
+int buttonInPrev = 0;
+
+void setup() {
+  pinMode(micIn, INPUT);
+}
+
+void loop() {
+  //Can't call someone if the phone is hung up
+  hungUp = !digitalRead(switchIn);
+  if (hungUp) {
+    return;
+  }
+
+  //Handle the user pressing the button to dial a phone number
+  int buttonInCurrent = digitalRead(buttonIn);
+  
+  if (buttonInCurrent == 1 && buttonInPrev == 0) {
+    phoneNumberNums++;
+  }
+  buttonInPrev = buttonInCurrent;
+
+  //You can't call someone if you don't put in a phone number
+  if (phoneNumberNums < 7) {
+    return;
+  }
+
+  //Look for someone speaking, and if they do play the dial tone
+  int micVolume = analogRead(A0);
+  micVolume = abs(micVolume - 512);
+  if (micVolume > 250 && micVolume < 500) {
+    dialTone();
+  }
+}
+
+void dialTone() {
+  //Give the user some time to actually talk, then hang up on them
+  delay(2000);
+  
+  //Hanging up sound
+  tone(speakerOut, NOTE_C1, 50); //dialtone
+  delay(75);
+  tone(speakerOut, NOTE_DS1, 50); //dialtone
+  delay(200);
+  tone(speakerOut, NOTE_F1, 75); //dialtone
+  delay(300);
+
+  //Play the dialtone until the user hangs up
+  while(!hungUp) {
+    tone(speakerOut, NOTE_FS2, 500); //dialtone
+    delay(500);
+
+    if (!digitalRead(switchIn)) {
+      hungUp = true;
+      phoneNumberNums = 0;
+    }
+  }
+}
